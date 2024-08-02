@@ -1,5 +1,4 @@
-from src.image import GreyscaleImage
-from src.numberjoiner import Colour
+from src.numberjoiner.Colour import Colour
 
 def test_colour():
     assert Colour.White != Colour.Grey

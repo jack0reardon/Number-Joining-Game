@@ -3,7 +3,8 @@
 
 from PIL import Image
 import numpy as np
-from ..numberjoiner.Colour import Colour
+from numberjoiner.Colour import Colour
+from numberjoiner.Point import Point
 
 class GreyscaleImage:
     def __init__(self):
@@ -22,7 +23,7 @@ class GreyscaleImage:
             raise TypeError('Constructor only supported between GreyscaleImage instances')
         
         result = cls()
-        result.greyscale_grid = np.array([[Colour.White for _ in range(other.greyscale_grid[0])] for _ in range(other.greyscale_grid)])
+        result.greyscale_grid = np.full(other.greyscale_grid.shape, Colour.White)
         return result
     
     @staticmethod
@@ -117,13 +118,24 @@ class GreyscaleImage:
         width, height = self.greyscale_grid.shape
         for x in range(width):
             for y in range(height):
-                if self.greyscale_grid[x, y] == Colour.Grey:
+                if self.greyscale_grid[x, y] != Colour.White:
                     return x, y
         
         return None, None
     
-    def __setitem__(self, x, y, value):
-        self.greyscale_grid[x, y] = value
+    def __setitem__(self, point, value):
+        if isinstance(point, Point):
+            return self.greyscale_grid[point.x, point.y]
+        elif isinstance(point, tuple):
+            self.greyscale_grid[point[0], point[1]] = value
+
+    def __getitem__(self, point):
+        if isinstance(point, Point):
+            return self.greyscale_grid[point.x, point.y]
+        elif isinstance(point, tuple):
+            return self.greyscale_grid[point[0], point[1]]
+
+        return None
     
     def __sub__(self, other):
         if not isinstance(other, GreyscaleImage):
@@ -132,7 +144,9 @@ class GreyscaleImage:
         if self.greyscale_grid.shape != other.greyscale_grid.shape:
             raise ValueError('Dimensions of two GreyscaleImages must be the same for subtraction')
         
-        return np.array([[max(0, self.greyscale_grid[x, y] - other.greyscale_grid[x, y]) for x in range(self.greyscale_grid[0])] for y in range(self.greyscale_grid)])
+        self.greyscale_grid -= other.greyscale_grid
+
+        return self
         
     def __str__(self):
         return '\n'.join([''.join(['*' if x == Colour.Grey else ' ' for x in row]) for row in self.greyscale_grid])
