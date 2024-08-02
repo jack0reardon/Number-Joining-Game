@@ -1,4 +1,4 @@
-from src.numberjoiner.Colour import Colour
+from src.canvas import Colour
 
 def test_colour():
     assert Colour.White != Colour.Grey
