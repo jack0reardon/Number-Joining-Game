@@ -1,9 +1,10 @@
 from warnings import warn
 from random import random, choice
-from pixel import Pixel
-from image import Colour
-from route_extension import RouteExtension
-from config import Config
+
+from .pixel import Pixel
+from image.colour import Colour
+from .route_extension import RouteExtension
+from config.config import Config
 
 config = Config()
 
@@ -19,13 +20,16 @@ class Route:
         if route_extension.next_pxl in self.path:
             raise ValueError('Attempted to add `pxl` to path, but it''s already on it.', UserWarning)
         
-        position_to_insert_pxl = -1 if route_extension.is_from_end else 0
-        if len(self) >= 2:
-            self.path[position_to_insert_pxl].colour = Colour.drawing_colour
-
         route_extension.next_pxl.colour = Colour.route_start_stop_colour
+        
+        if len(self.path) > 0:
+            position_to_insert_pxl = -1 if route_extension.is_from_end else 0
+            if len(self) >= 2:
+                self.path[position_to_insert_pxl].colour = Colour.drawing_colour
+            self.path.insert(position_to_insert_pxl, route_extension.next_pxl)
+        else:
+            self.path.append(route_extension.next_pxl)
 
-        self.path.insert(route_extension.next_pxl, position_to_insert_pxl)
         route_extension.next_pxl.put_on_route(self)
 
     def join_to_route(self, route_extension):
@@ -60,7 +64,7 @@ class Route:
                
         route_extension = self.get_next_pxl(canvas)
 
-        prior_pxl = self.path[-1 if route_extension.next_pxl_is_from_end else 0]
+        prior_pxl = self.path[-1 if route_extension.is_from_end else 0]
 
         if route_extension.next_pxl is None:
             # Nowhere to extend to, so just finalise this route
@@ -102,9 +106,9 @@ class Route:
         next_pxl_from_end = self.get_next_pxl_random(self.path[-1], canvas)
 
         if next_pxl_from_end is not None:
-            return RouteExtension(next_pxl_from_end, True)
+            return RouteExtension(next_pxl_from_end, True, None)
         
-        return RouteExtension(self.get_next_pxl_random(self.path[0], canvas), False)
+        return RouteExtension(self.get_next_pxl_random(self.path[0], canvas), False, None)
     
     def get_next_pxl_random(self, curr_pxl, canvas):
         adjacent_pxls_for_extending_route = canvas.get_adjacent_pxls_for_extending_route(curr_pxl)

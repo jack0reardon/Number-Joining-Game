@@ -1,9 +1,11 @@
-from image import Colour, Point
-from route import Route
-from config import Config
-from pixel import Pixel
-from random import choice
 import numpy as np
+from random import choice
+
+from image.colour import Colour
+from image.point import Point
+from .pixel import Pixel
+from .route import Route
+from .route_extension import RouteExtension
 
 class Canvas:
     def __init__(self, pixels):
@@ -21,15 +23,19 @@ class Canvas:
         for y in range(height):
             for x in range(width):
                 point = Point(x, y)
-                colour = rgb_image.pixels_fit_to_size_greyscale[x, y]
-                new_pixels[x, y] = Pixel(point, colour)
+                colour = rgb_image.pixels_fit_to_size_greyscale[y, x]
+                new_pixels[y, x] = Pixel(point, colour)
 
         return cls(new_pixels)
 
     def initialise_greyscale(self):
-        non_white_pixels_indices = np.array([p.colour != Colour.WHITE for p in self.pixels])
-        self.n_grey_pixels_remaining = non_white_pixels_indices.size
-        self.pixels[non_white_pixels_indices] = Colour.GREY
+        height, width = self.pixels.shape
+        self.n_grey_pixels_remaining = 1
+        for y in range(height):
+            for x in range(width):
+                if self.pixels[y, x].colour != Colour.WHITE:
+                    self.pixels[y, x].colour = Colour.GREY
+                    self.n_grey_pixels_remaining += 1
 
     def colour_pxl_neighbours_as_hooks(self, pxl):
         hookable_pxls_NSEW = [pxl for pxl in self.get_pxls_NSEW(pxl) if pxl.colour == Colour.GREY]
@@ -42,16 +48,15 @@ class Canvas:
         next_pxl_options.update({route.path[-1] for route in self.routes if not route.finalised})
         return choice(next_pxl_options)
     
-    def get_grey_pixels_indices(self):
-        return np.array([p.colour == Colour.GREY for p in self.pixels])
+    def get_grey_pixels(self):
+        return np.array([p for row in self.pixels for p in row if p.colour == Colour.GREY])
     
     def get_next_pixel_for_new_route(self):
-        grey_pixels_indices = self.get_grey_pixels_indices()
+        grey_pixels = self.get_grey_pixels()
 
-        if grey_pixels_indices.size == 0:
+        if grey_pixels.size == 0:
             return None
         
-        grey_pixels = self.pixels[grey_pixels_indices]
         next_pixel = np.random.choice(grey_pixels)
         return next_pixel
     
@@ -91,7 +96,8 @@ class Canvas:
 
     def start_new_route_from(self, curr_pxl):
         new_route = Route()
-        new_route.append(curr_pxl, from_end=True)
+        route_extension = RouteExtension(curr_pxl, None, None)
+        new_route.append(route_extension)
         self.routes.append(new_route)
         self.decrement_n_grey_pixels_remaining()
         curr_pxl.route.extend(self)
@@ -136,17 +142,19 @@ class Canvas:
         assert self.n_unfinalised_routes == 0
         height, width = self.pixels.shape
         game_pixels = np.empty((height, width), dtype=object)
+        game_pixels[:] = Colour.WHITE.value
+
         for y in range(height):
             for x in range(width):
-                route_length = len(self.pixels[x, y].route)
-                value = route_length if self.pixels[x, y].colour == Colour.route_start_stop_colour else None
-                game_pixels[x, y] = value
+                if self.pixels[y, x].route is not None and self.pixels[y, x].colour == Colour.route_start_stop_colour:
+                    route_length = len(self.pixels[y, x].route)
+                    game_pixels[y, x] = route_length
 
         return game_pixels
     
     def __getitem__(self, pnt_or_pxl_or_tuple):
         if isinstance(pnt_or_pxl_or_tuple, Point):
-            return self.pixels[pnt_or_pxl_or_tuple.x, pnt_or_pxl_or_tuple.y]
+            return self.pixels[pnt_or_pxl_or_tuple.y, pnt_or_pxl_or_tuple.x]
         elif isinstance(pnt_or_pxl_or_tuple, Pixel):
             return self.pixels[pnt_or_pxl_or_tuple.point.x, pnt_or_pxl_or_tuple.point.y]
         elif isinstance(pnt_or_pxl_or_tuple, tuple):

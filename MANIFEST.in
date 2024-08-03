@@ -1,2 +1,2 @@
 include src/image/data/*.jpg
-include src/image/data/specifications.csv
+include src/config/data/specifications.csv

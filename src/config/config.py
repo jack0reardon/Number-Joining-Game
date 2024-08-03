@@ -1,23 +1,26 @@
+import pkg_resources
 import csv
 from warnings import warn
 
 class Config:
     # Singleton pattern, for global access once instantiated by a main method
     _instance = None
+    _specifications_filename = 'data/specifications.csv'
 
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(Config, cls).__new__(cls)
-            cls._instance._initialized = False
+            cls._instance._initialized = False       
+
         return cls._instance
 
-    def __init__(self, specifications_filename, difficulty=None):
+    def __init__(self):
         if self._initialized:
             warn('Accessing existing instance of Config', UserWarning)
             return
-        if specifications_filename:
-            self.constants = Config.load_constants(specifications_filename)
-            self.set_difficulty(difficulty)
+    
+        specifications_filename = pkg_resources.resource_filename('config', Config._specifications_filename)
+        self.constants = Config.load_constants(specifications_filename)
         self._initialized = True
 
     @staticmethod
@@ -60,10 +63,10 @@ class Config:
         self.set_probability_of_extending_route()
         
     def set_probability_of_extending_route(self):
-        assert 'DIFFICULTY' in self
-        assert 'MAX_DIFFICULTY_PROBABILITY' in self
+        assert 'DIFFICULTY' in self.constants
+        assert 'MAX_DIFFICULTY_PROBABILITY' in self.constants
         
-        difficulty = self['MAX_DIFFICULTY_PROBABILITY']
+        difficulty = self['DIFFICULTY']
         max_difficulty_probability = self['MAX_DIFFICULTY_PROBABILITY']
         incremental_difficulty_probability = max_difficulty_probability ** (1.0 / difficulty)
 

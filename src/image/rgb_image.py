@@ -2,9 +2,9 @@ from PIL import Image
 import numpy as np
 from warnings import warn
 
-from colour import Colour
-from point import Point
-from config import Config
+from .colour import Colour
+from .point import Point
+from config.config import Config
 
 config = Config()
 
@@ -22,7 +22,7 @@ class RGBImage:
         return cls(pixels)
     
     def fit_to_size(self, width_in_pxls_max, height_in_pxls_max):
-        proposed_compression_factor = RGBImage.propose_compression_factor(width_in_pxls_max, height_in_pxls_max)
+        proposed_compression_factor = self.propose_compression_factor(width_in_pxls_max, height_in_pxls_max)
         self.fit_pixels_to_size(proposed_compression_factor)
 
     def fit_pixels_to_size(self, proposed_compression_factor):
@@ -71,7 +71,7 @@ class RGBImage:
         return greyscale_from_rgb.astype(np.uint8)
 
     def propose_compression_factor(self, width_in_pxls_max, height_in_pxls_max):
-        height_in_pxls_curr, width_in_pxls_curr = self.pixels.shape
+        height_in_pxls_curr, width_in_pxls_curr, _ = self.pixels.shape
         proposed_compression_factor_max = width_in_pxls_curr // width_in_pxls_max
         square_height_max = height_in_pxls_curr // height_in_pxls_max
         proposed_compression_factor = max(proposed_compression_factor_max, square_height_max)

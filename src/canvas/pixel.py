@@ -1,4 +1,5 @@
-from image import Point, Colour
+from image.point import Point
+from image.colour import Colour
 
 class Pixel:
     def __init__(self, point, colour):

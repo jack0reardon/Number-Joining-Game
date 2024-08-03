@@ -1,10 +1,14 @@
-from image import RGBImage, Colour
-from canvas import Canvas
-from config import Config
+from canvas.canvas import Canvas
+from config.config import Config
+from image.rgb_image import RGBImage
+from image.colour import Colour
 
 class Game:
+    tester = 1
+
     def __init__(self, filename, width_in_pxls_max, height_in_pxls_max):
         config = Config()
+        config.set_difficulty(10)
 
         rgb_image = RGBImage.from_filename(filename)
         rgb_image.fit_to_size(width_in_pxls_max, height_in_pxls_max)
@@ -15,7 +19,7 @@ class Game:
         self.game_pixels = canvas.get_canvas_as_game()
 
     def __str__(self):
-        return '\n'.join([''.join([str(x) if x != Colour.White else ' ' for x in row]) for row in self.pixels])
+        return '\n'.join([''.join([str(x) if x != Colour.WHITE else ' ' for x in row]) for row in self.game_pixels])
 
 
 if __name__ == '__main__':
