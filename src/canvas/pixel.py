@@ -15,6 +15,3 @@ class Pixel:
 
     def put_on_route(self, route):
         self.route = route
-
-    def finalise(self):
-        self.colour = Colour.finalised_colour()

@@ -1,53 +1,81 @@
 import numpy as np
 from random import choice
+from copy import copy
 
 from image.colour import Colour
 from image.point import Point
 from .pixel import Pixel
 from .route import Route
 from .route_extension import RouteExtension
+from config.config import Config
+
+config = Config()
 
 class Canvas:
     def __init__(self, pixels):
         self.pixels = pixels
         self.height, self.width = pixels.shape
-        self.n_grey_pixels_remaining = None
-        self.routes = []
-
-        self.initialise_greyscale()
+        self.routes = None
 
     @classmethod
     def from_greyscale_image(cls, rgb_image):
         height, width = rgb_image.pixels_fit_to_size_greyscale.shape
         new_pixels = np.empty((height, width), dtype=object)
+        routes = []
         for y in range(height):
             for x in range(width):
                 point = Point(x, y)
                 colour = rgb_image.pixels_fit_to_size_greyscale[y, x]
-                new_pixels[y, x] = Pixel(point, colour)
+                
+                if colour != Colour.WHITE:
+                    colour = Colour.GREY
+                
+                new_pixel = Pixel(point, colour)
+                new_pixels[y, x] = new_pixel
 
-        return cls(new_pixels)
-
-    def initialise_greyscale(self):
-        height, width = self.pixels.shape
-        self.n_grey_pixels_remaining = 0
-        for y in range(height):
-            for x in range(width):
-                if self.pixels[y, x].colour != Colour.WHITE:
-                    self.pixels[y, x].colour = Colour.GREY
-                    self.n_grey_pixels_remaining += 1
-
-    def colour_pxl_neighbours_as_hooks(self, pxl):
-        hookable_pxls_NSEW = [hookable_pxl_NSEW for hookable_pxl_NSEW in self.get_pxls_NSEW(pxl) if hookable_pxl_NSEW.colour == Colour.GREY]
-
-        for hookable_pxl_NSEW in hookable_pxls_NSEW:
-            hookable_pxl_NSEW.colour = Colour.hook_colour()
-
-    def get_next_route_to_extend(self):
-        return choice([r for r in self.routes if not r.finalised])
+        result = cls(new_pixels)
+        result.initialise_routes()
+        return result
     
-    def get_new_route_pxls(self):
-        return np.array([p for row in self.pixels for p in row if p.colour.is_available_for_new_route()])
+    def initialise_routes(self):
+        self.routes = []
+        for y in range(self.height):
+            for x in range(self.width):
+                if self.pixels[y, x].colour != Colour.WHITE:
+                    new_route = Route.from_pxl(self.pixels[y, x])
+                    self.routes.append(new_route)
+
+    def get_initial_coloured_canvas(self):
+        initial_coloured_canvas = np.empty((self.height, self.width), dtype=object)
+
+        # First, paint it all white
+        for y in range(self.height):
+            for x in range(self.width):
+                initial_coloured_canvas[y, x] = Colour.WHITE
+        
+        # Then paint in all the route starts and ends
+        for route in self.routes:
+            initial_coloured_canvas[route.path[0].point.y, route.path[0].point.x] = Colour.route_start_stop_colour
+            initial_coloured_canvas[route.path[-1].point.y, route.path[-1].point.x] = Colour.route_start_stop_colour
+        
+        return initial_coloured_canvas
+
+    def copy_coloured_canvas(self, coloured_canvas):
+        initial_coloured_canvas = np.empty((self.height, self.width), dtype=object)
+
+        # First, paint it all white
+        for y in range(self.height):
+            for x in range(self.width):
+                initial_coloured_canvas[y, x] = coloured_canvas[y, x]
+
+        return initial_coloured_canvas
+
+    @property
+    def routes_to_extend(self):
+        return [r for r in self.routes if r.should_extend()]
+    
+    def get_next_route_to_extend(self):
+        return choice(self.routes_to_extend)
     
     def get_next_pixel_for_new_route(self):
         new_route_pxls = self.get_new_route_pxls()
@@ -63,60 +91,114 @@ class Canvas:
         assert self.routes, 'Must have at least one route!'
         return sum([1 if not route.finalised else 0 for route in self.routes])
     
-    def grow_routes(self):
-        self.start_new_route()
-
-        # By design, the second condition here (self.n_grey_pixels_remaining > 0)
-        # is superfluous and is provided for clarity only. Considering the definition of grow_a_route()
-        # further below, start_new_route() takes precedence over extend_existing_routes().
-        # This will cause the canvas to initially be flooded with unfinalised routes. Hence,
-        # n_grey_pixels_remaining > 0 implies n_unfinalised_routes > 0. The rare edge case
-        # (when the one and only route is the entire and only grey area) terminates similarly
-        # upon the call to extend_existing_routes ()
-        while self.n_unfinalised_routes > 0 or self.n_grey_pixels_remaining > 0:
-            self.grow_a_route()
-    
-    def grow_a_route(self):
-        if self.n_grey_pixels_remaining > 0:
-            self.start_new_route()
-        else:
-            self.extend_existing_routes()
-
-    def extend_existing_routes(self):
+    def extend_routes(self):
         route_to_extend = self.get_next_route_to_extend()
-
-        if route_to_extend is None:
-            return
-        
-        route_to_extend.extend(self)
-        
-    
-    def start_new_route(self):
-        curr_pxl = self.get_next_pixel_for_new_route()
-
-        if curr_pxl is None:
-            return
-        
-        self.start_new_route_from(curr_pxl)
-
-    def start_new_route_from(self, curr_pxl):
-        new_route = Route()
-        route_extension = RouteExtension(curr_pxl, None, None)
-        new_route.append(route_extension)
-        self.routes.append(new_route)
-        self.decrement_n_grey_pixels_remaining()
-        curr_pxl.route.extend(self)
+        while route_to_extend:
+            route_to_extend.extend(self)
+            route_to_extend = self.get_next_route_to_extend()
 
     def remove_route(self, route_to_remove):
-        if route_to_remove is not None:
-            self.routes.remove(route_to_remove)
+        assert route_to_remove is not None, 'Route does not exist'
+        self.routes.remove(route_to_remove)
+    
+    def does_have_unique_solution(self, pxl_to_connect_A, pxl_to_connect_B):
+        coloured_canvas = self.get_initial_coloured_canvas()
+        n_solutions = self.get_n_solutions(coloured_canvas, pxl_to_connect_A, [pxl_to_connect_B])
+        return n_solutions == 1
 
-    def decrement_n_grey_pixels_remaining(self):
-        self.n_grey_pixels_remaining -= 1
+    def get_n_solutions(self, coloured_canvas, pxl_to_connect, other_pxls_to_connect):
+        if pxl_to_connect is None:
+            return 1
+        
+        n = pxl_to_connect.route.len
+        solutions = self.seek_route_of_length_n(coloured_canvas, [pxl_to_connect], n)
 
+        if not solutions:
+            return 0
+        
+        n_solutions = 0
+        for solution in solutions:
+            last_pxl = solution[-1]
+            other_route = last_pxl.route
+            other_route_other_pixel = other_route.path[0] if last_pxl == other_route.path[-1] else other_route.path[-1]
+
+            new_pxls_to_connect = {pxl for pxl in other_pxls_to_connect}
+            new_pxls_to_connect.update({pxl.route.path[0] for pxl in solution if pxl.route is not None})
+            new_pxls_to_connect.update({pxl.route.path[-1] for pxl in solution if pxl.route is not None})
+            new_pxls_to_connect.remove(solution[0])
+            new_pxls_to_connect.remove(solution[-1])
+
+            new_coloured_canvas = self.paint_canvas_with_solution(coloured_canvas, solution)
+
+            next_pxl_to_connect = None
+
+            if other_route_other_pixel == pxl_to_connect:
+                # Just found the pre-existing route
+                # Solidify this route and continue to connect other pixels
+                if new_pxls_to_connect:
+                    next_pxl_to_connect = new_pxls_to_connect.pop()
+                else:
+                    next_pxl_to_connect = None
+            else:
+                # Prioritise the other route's other pixel
+                next_pxl_to_connect = other_route_other_pixel
+                new_pxls_to_connect.remove(next_pxl_to_connect)
+
+            n_solutions += self.get_n_solutions(new_coloured_canvas, next_pxl_to_connect, new_pxls_to_connect)
+
+            if n_solutions > 1:
+                # There are already multiple solutions identified
+                # Don't even bother looking through the other solutions
+                return n_solutions
+            
+        return n_solutions
+    
+    def paint_canvas_with_solution(self, coloured_canvas, solution):
+        new_coloured_canvas = self.copy_coloured_canvas(coloured_canvas)
+        for pxl in solution:
+            new_coloured_canvas[pxl.point.y, pxl.point.x] = Colour.confirmed_colour()
+        return new_coloured_canvas
+
+    def seek_route_of_length_n(self, coloured_canvas, existing_path, n):
+        curr_pxl = existing_path[-1]
+
+        if len(existing_path) == n:
+            if curr_pxl.colour == Colour.route_start_stop_colour() and curr_pxl.route.len == n:
+                return [existing_path]
+            else:
+                return [[]]
+
+        if len(existing_path) > 1 and curr_pxl.colour == Colour.route_start_stop_colour():
+            # Reached another number too soon
+            return [[]]
+        
+        adjacent_pxls_for_route_seek = self.get_adjacent_pxls_for_route_seek(coloured_canvas, curr_pxl, existing_path, n)
+        all_routes = []
+        for pxl in adjacent_pxls_for_route_seek:
+            new_path = existing_path.copy()
+            new_path.append(pxl)
+            new_routes = self.seek_route_of_length_n(coloured_canvas, new_path, n)
+            for new_route in new_routes:
+                if len(new_route) > 0:
+                    all_routes.append(new_route)
+        
+        return all_routes
+
+    def get_adjacent_pxls_for_route_seek(self, coloured_canvas, curr_pxl, existing_path, n):
+        adjacent_pxls_for_route_seek = []
+        for pxl in self.get_pxls_NSEW(curr_pxl):
+            pxl_colour = coloured_canvas[pxl.point.y, pxl.point.x]
+            if pxl not in existing_path and \
+                (pxl_colour == Colour.WHITE or \
+                    (pxl_colour == Colour.route_start_stop_colour and \
+                     pxl.route.len == n)):
+                adjacent_pxls_for_route_seek.append(pxl)
+        
+        return adjacent_pxls_for_route_seek
+    
     def get_adjacent_pxls_for_extending_route(self, curr_pxl):
         adjacent_pxls = self.get_pxls_NSEW(curr_pxl)
-        return [pxl for pxl in adjacent_pxls if pxl.colour.is_available_for_extending_route()]
+        return [pxl for pxl in adjacent_pxls if pxl.colour == Colour.route_start_stop_colour()]
     
     def get_pnt_within_canvas(self, x, y):
         if x < 0 or y < 0 or x >= self.width or y >= self.height:
@@ -138,7 +220,8 @@ class Canvas:
     
     def get_pnts_NSEW(self, point):
         get_pnts_NSEW_funcs = [self.get_pnt_N, self.get_pnt_S, self.get_pnt_E, self.get_pnt_W]
-        return [func(point) for func in get_pnts_NSEW_funcs]
+        pnts = [func(point) for func in get_pnts_NSEW_funcs]
+        return [pnt for pnt in pnts if pnt is not None]
     
     def get_pxls_NSEW(self, pixel):
         pnts_NSEW = self.get_pnts_NSEW(pixel.point)

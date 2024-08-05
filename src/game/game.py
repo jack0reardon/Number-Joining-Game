@@ -4,8 +4,6 @@ from image.rgb_image import RGBImage
 from image.colour import Colour
 
 class Game:
-    tester = 1
-
     def __init__(self, filename, width_in_pxls_max, height_in_pxls_max):
         config = Config()
         config.set_difficulty(10)
@@ -15,7 +13,7 @@ class Game:
         rgb_image.to_greyscale()
         
         canvas = Canvas.from_greyscale_image(rgb_image)
-        canvas.grow_routes()
+        canvas.extend_routes()
         self.game_pixels = canvas.get_canvas_as_game()
 
     def __str__(self):
