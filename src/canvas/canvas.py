@@ -30,7 +30,7 @@ class Canvas:
 
     def initialise_greyscale(self):
         height, width = self.pixels.shape
-        self.n_grey_pixels_remaining = 1
+        self.n_grey_pixels_remaining = 0
         for y in range(height):
             for x in range(width):
                 if self.pixels[y, x].colour != Colour.WHITE:
@@ -38,37 +38,42 @@ class Canvas:
                     self.n_grey_pixels_remaining += 1
 
     def colour_pxl_neighbours_as_hooks(self, pxl):
-        hookable_pxls_NSEW = [pxl for pxl in self.get_pxls_NSEW(pxl) if pxl.colour == Colour.GREY]
+        hookable_pxls_NSEW = [hookable_pxl_NSEW for hookable_pxl_NSEW in self.get_pxls_NSEW(pxl) if hookable_pxl_NSEW.colour == Colour.GREY]
 
-        for pxl in hookable_pxls_NSEW:
-            pxl.colour = Colour.hook_colour
+        for hookable_pxl_NSEW in hookable_pxls_NSEW:
+            hookable_pxl_NSEW.colour = Colour.hook_colour()
 
-    def get_next_pixel_for_extending_route(self):
-        next_pxl_options = {route.path[0] for route in self.routes if not route.finalised}
-        next_pxl_options.update({route.path[-1] for route in self.routes if not route.finalised})
-        return choice(next_pxl_options)
+    def get_next_route_to_extend(self):
+        return choice([r for r in self.routes if not r.finalised])
     
-    def get_grey_pixels(self):
-        return np.array([p for row in self.pixels for p in row if p.colour == Colour.GREY])
+    def get_new_route_pxls(self):
+        return np.array([p for row in self.pixels for p in row if p.colour.is_available_for_new_route()])
     
     def get_next_pixel_for_new_route(self):
-        grey_pixels = self.get_grey_pixels()
+        new_route_pxls = self.get_new_route_pxls()
 
-        if grey_pixels.size == 0:
+        if new_route_pxls.size == 0:
             return None
         
-        next_pixel = np.random.choice(grey_pixels)
+        next_pixel = np.random.choice(new_route_pxls)
         return next_pixel
     
     @property
     def n_unfinalised_routes(self):
         assert self.routes, 'Must have at least one route!'
-        return sum([1 if route.finalised else 0 for route in self.routes])
+        return sum([1 if not route.finalised else 0 for route in self.routes])
     
     def grow_routes(self):
         self.start_new_route()
 
-        while self.n_unfinalised_routes > 0:
+        # By design, the second condition here (self.n_grey_pixels_remaining > 0)
+        # is superfluous and is provided for clarity only. Considering the definition of grow_a_route()
+        # further below, start_new_route() takes precedence over extend_existing_routes().
+        # This will cause the canvas to initially be flooded with unfinalised routes. Hence,
+        # n_grey_pixels_remaining > 0 implies n_unfinalised_routes > 0. The rare edge case
+        # (when the one and only route is the entire and only grey area) terminates similarly
+        # upon the call to extend_existing_routes ()
+        while self.n_unfinalised_routes > 0 or self.n_grey_pixels_remaining > 0:
             self.grow_a_route()
     
     def grow_a_route(self):
@@ -78,12 +83,12 @@ class Canvas:
             self.extend_existing_routes()
 
     def extend_existing_routes(self):
-        curr_pxl = self.get_next_pixel_for_extending_route()
+        route_to_extend = self.get_next_route_to_extend()
 
-        if curr_pxl is None:
+        if route_to_extend is None:
             return
         
-        curr_pxl.route.extend(self)
+        route_to_extend.extend(self)
         
     
     def start_new_route(self):
@@ -102,7 +107,7 @@ class Canvas:
         self.decrement_n_grey_pixels_remaining()
         curr_pxl.route.extend(self)
 
-    def remove_routes(self, route_to_remove):
+    def remove_route(self, route_to_remove):
         if route_to_remove is not None:
             self.routes.remove(route_to_remove)
 
@@ -110,7 +115,8 @@ class Canvas:
         self.n_grey_pixels_remaining -= 1
 
     def get_adjacent_pxls_for_extending_route(self, curr_pxl):
-        return [pxl for pxl in self.get_pxls_NSEW(curr_pxl) if pxl.colour.is_available_for_extending_route()]
+        adjacent_pxls = self.get_pxls_NSEW(curr_pxl)
+        return [pxl for pxl in adjacent_pxls if pxl.colour.is_available_for_extending_route()]
     
     def get_pnt_within_canvas(self, x, y):
         if x < 0 or y < 0 or x >= self.width or y >= self.height:
@@ -144,11 +150,12 @@ class Canvas:
         game_pixels = np.empty((height, width), dtype=object)
         game_pixels[:] = Colour.WHITE.value
 
-        for y in range(height):
-            for x in range(width):
-                if self.pixels[y, x].route is not None and self.pixels[y, x].colour == Colour.route_start_stop_colour:
-                    route_length = len(self.pixels[y, x].route)
-                    game_pixels[y, x] = route_length
+        for route in self.routes:
+            route_start = route.path[0]
+            route_end = route.path[-1]
+            route_len = str(len(route))
+            game_pixels[route_start.point.y, route_start.point.x] = route_len
+            game_pixels[route_end.point.y, route_end.point.x] = route_len
 
         return game_pixels
     

@@ -20,12 +20,13 @@ class Route:
         if route_extension.next_pxl in self.path:
             raise ValueError('Attempted to add `pxl` to path, but it''s already on it.', UserWarning)
         
-        route_extension.next_pxl.colour = Colour.route_start_stop_colour
+        route_extension.next_pxl.colour = Colour.route_start_stop_colour()
         
-        if len(self.path) > 0:
-            position_to_insert_pxl = -1 if route_extension.is_from_end else 0
-            if len(self) >= 2:
-                self.path[position_to_insert_pxl].colour = Colour.drawing_colour
+        path_len = len(self.path)
+        if path_len > 0:
+            position_to_insert_pxl = path_len if route_extension.is_from_end else 0
+            if path_len >= 2:
+                self.path[position_to_insert_pxl].colour = Colour.drawing_colour()
             self.path.insert(position_to_insert_pxl, route_extension.next_pxl)
         else:
             self.path.append(route_extension.next_pxl)
@@ -33,7 +34,7 @@ class Route:
         route_extension.next_pxl.put_on_route(self)
 
     def join_to_route(self, route_extension):
-        route_extension.other_route = route_extension.next_pxls.route
+        route_extension.other_route = route_extension.next_pxl.route
 
         if not route_extension.is_from_end:
             # Connecting `self.path` to the other route from the path's start
@@ -44,36 +45,33 @@ class Route:
         
         if other_is_from_end:
             # Same as above
-            route_extension.next_pxl.route.reversed()
+            route_extension.next_pxl.route.path.reverse()
 
-        self.path.extend(route_extension.next_pxl.route)
+        self.path.extend(route_extension.next_pxl.route.path)
 
         for pxl in route_extension.next_pxl.route.path:
-            colour_to_draw = Colour.route_start_stop_colour if pxl in [self.path[0], self.path[-1]] else Colour.drawing_colour
+            colour_to_draw = Colour.route_start_stop_colour() if pxl in [self.path[0], self.path[-1]] else Colour.drawing_colour()
             pxl.colour = colour_to_draw
             pxl.route = self
 
-    # Returns a route to release, if any, due to being joined via this extend() call
     def extend(self, canvas):
         if len(self) == config['DIFFICULTY']:
             # Reached the maximum length
-            return None
+            self.finalise()
+            return
         
         if not self.should_extend():
-            return None
+            return
                
-        route_extension = self.get_next_pxl(canvas)
+        route_extension = self.get_next_route_extension(canvas)
 
         prior_pxl = self.path[-1 if route_extension.is_from_end else 0]
 
         if route_extension.next_pxl is None:
             # Nowhere to extend to, so just finalise this route
             self.finalise()
-            return None
+            return
         
-        # Even though the route has not actually been extended yet, just
-        # assume it will be when the return statement is called afterwards
-        canvas.decrement_n_grey_pixels_remaining()
         self.extend_from(route_extension)
     
         # If there is no `other_route`, the route was simply extended and not joined onto another route
@@ -81,15 +79,18 @@ class Route:
         # that there was an obstruction preventing an ambiguous route
         if route_extension.other_route is None:
             canvas.colour_pxl_neighbours_as_hooks(prior_pxl)
-
-        canvas.remove_routes(route_extension.other_route)
+            # Also decrement the number remainaining
+            canvas.decrement_n_grey_pixels_remaining()
+        else:
+            if route_extension.other_route not in canvas.routes:
+                print(1)
+            canvas.remove_route(route_extension.other_route)
 
     def extend_from(self, route_extension):
-        if route_extension.next_pxl.colour == Colour.route_start_stop_colour:
-            joining_route = route_extension.next_pxl.route
+        if route_extension.next_pxl.colour == Colour.route_start_stop_colour():
             self.join_to_route(route_extension)
-        
-        self.append(route_extension)
+        else:
+            self.append(route_extension)
             
             
     def finalise(self):
@@ -101,8 +102,8 @@ class Route:
     def should_extend(self):
         prob_extend_route = config['PROBABILITY_OF_EXTENDING_ROUTE']
         return random() < prob_extend_route
-    
-    def get_next_pxl(self, canvas):
+
+    def get_next_route_extension(self, canvas):
         next_pxl_from_end = self.get_next_pxl_random(self.path[-1], canvas)
 
         if next_pxl_from_end is not None:

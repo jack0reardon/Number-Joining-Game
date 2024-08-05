@@ -17,4 +17,4 @@ class Pixel:
         self.route = route
 
     def finalise(self):
-        self.colour = Colour.finalised_colour
+        self.colour = Colour.finalised_colour()

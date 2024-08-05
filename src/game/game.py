@@ -19,7 +19,7 @@ class Game:
         self.game_pixels = canvas.get_canvas_as_game()
 
     def __str__(self):
-        return '\n'.join([''.join([str(x) if x != Colour.WHITE else ' ' for x in row]) for row in self.game_pixels])
+        return '\n'.join([''.join([str(x) if x != Colour.WHITE.value else '.' for x in row]) for row in self.game_pixels])
 
 
 if __name__ == '__main__':

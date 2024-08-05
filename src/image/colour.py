@@ -8,21 +8,24 @@ class Colour(Enum):
     RED = '^'
     BLUE = '!'
 
-    @property
-    def drawing_colour(self):
+    @staticmethod
+    def drawing_colour():
         return Colour.GREEN
     
-    @property
-    def hook_colour(self):
+    @staticmethod
+    def hook_colour():
         return Colour.YELLOW
 
-    @property
-    def route_start_stop_colour(self):
+    @staticmethod
+    def route_start_stop_colour():
         return Colour.RED
 
-    @property
-    def finalised_colour(self):
+    @staticmethod
+    def finalised_colour():
         return Colour.BLUE
 
     def is_available_for_extending_route(self):
-        return self in [Colour.GREY, Colour.route_start_stop_colour, Colour.hook_colour]
+        return self in [Colour.GREY, Colour.route_start_stop_colour(), Colour.hook_colour()]
+    
+    def is_available_for_new_route(self):
+        return self in [Colour.GREY, Colour.hook_colour()]
