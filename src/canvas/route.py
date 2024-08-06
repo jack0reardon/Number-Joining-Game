@@ -53,20 +53,22 @@ class Route:
             # Same as above
             route_extension.next_pxl.route.path.reverse()
 
-    def join_to_route(self, route_extension):
+    def join_to_route(self, route_extension, canvas):
         self.orientate_routes_for_join(route_extension)
         self.path.extend(route_extension.next_pxl.route.path)
+        canvas.remove_route(route_extension.other_route)
         for pxl in route_extension.next_pxl.route.path:
             pxl.route = self
+        self.recolour_route()
 
-    # def recolour_route(self):
-    #     for pxl in self.path:
-    #         colour_to_draw = Colour.route_start_stop_colour() if pxl in [self.path[0], self.path[-1]] else Colour.drawing_colour()
-    #         pxl.colour = colour_to_draw
-    #         pxl.route = self
+    def recolour_route(self):
+        for pxl in self.path:
+            colour_to_draw = Colour.route_start_stop_colour() if pxl in [self.path[0], self.path[-1]] else Colour.drawing_colour()
+            pxl.colour = colour_to_draw
+            pxl.route = self
 
     def reached_max_length(self):
-        return self.len == config['DIFFICULTY']
+        return self.len >= config['MAX_LENGTH']
     
     def should_extend(self):
         probability_of_extension = 0 if self.reached_max_length() else config['PROBABILITY_OF_EXTENDING_ROUTE']
@@ -83,31 +85,42 @@ class Route:
 
     def propose_extension(self, route_extension, canvas):
         # Retain a copy of the original in case things don't work out
+        other_route = route_extension.other_route
         original_route_A_path = self.path.copy()
-        original_route_B_path = route_extension.other_route.path.copy()
+        original_route_B_path = other_route.path.copy()
 
-        self.join_to_route(route_extension)
+        self.join_to_route(route_extension, canvas)
         
         pxl_to_connect_A = self.path[0]
         pxl_to_connect_B = self.path[-1]
 
         has_unique_solution = canvas.does_have_unique_solution(pxl_to_connect_A, pxl_to_connect_B)
 
-        if has_unique_solution:
-            canvas.remove_route(route_extension.other_route)
-            # self.recolour_route()
-        else:
+        if not has_unique_solution:
             # Reverse the preoposed extension!
             self.path = original_route_A_path
-            route_extension.other_route.path = original_route_B_path
+            other_route.path = original_route_B_path
             for pxl in self.path:
                 pxl.route = self
-            for pxl in route_extension.other_route.path:
-                pxl.route = route_extension.other_route
+            for pxl in other_route.path:
+                pxl.route = other_route
+            
+            self.recolour_route()
+            other_route.recolour_route()
+            canvas.add_route(other_route)
+        
 
 
     def get_next_route_extension(self, canvas):
         next_pxl_from_end = self.get_next_pxl_random(self.path[-1], canvas)
+
+        if next_pxl_from_end is not None and \
+            ((next_pxl_from_end.point.x == 2 and next_pxl_from_end.point.y == 7) or \
+            (next_pxl_from_end.point.x == 2 and next_pxl_from_end.point.y == 8) or \
+            (next_pxl_from_end.point.x == 3 and next_pxl_from_end.point.y == 7) or \
+            (next_pxl_from_end.point.x == 3 and next_pxl_from_end.point.y == 8)) and \
+            (next_pxl_from_end.route.len == 1):
+            print(1)
 
         if next_pxl_from_end is not None:
             return RouteExtension(next_pxl_from_end, True)
@@ -117,7 +130,11 @@ class Route:
         return RouteExtension(next_pxl_from_start, False)
     
     def get_next_pxl_random(self, curr_pxl, canvas):
-        adjacent_pxls_for_extending_route = canvas.get_adjacent_pxls_for_extending_route(curr_pxl)
+        adjacent_pxls_for_extending_route = canvas.get_adjacent_pxls_for_extending_route(curr_pxl, self)
+
+        # Subset only those that do not extent the route beyond the maximum lenght
+        existing_len = self.len
+        adjacent_pxls_for_extending_route = [pxl for pxl in adjacent_pxls_for_extending_route if existing_len + pxl.route.len <= config['MAX_LENGTH']]
 
         if len(adjacent_pxls_for_extending_route) == 0:
             return None

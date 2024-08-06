@@ -51,26 +51,26 @@ class Config:
             warn('Could not match data_type. Defaulting to str() function.', UserWarning)
             return default
         
-    def set_difficulty(self, difficulty):
-        if difficulty is not None:
-            assert isinstance(difficulty, int)
-            assert difficulty > 0
-            assert difficulty <= 20
-            self['DIFFICULTY'] = difficulty
+    def set_max_length(self, max_length):
+        if max_length is not None:
+            assert isinstance(max_length, int)
+            assert max_length > 0
+            assert max_length <= 20
+            self['MAX_LENGTH'] = max_length
         else:
-            self['DIFFICULTY'] = self['DEFAULT_DIFFICULTY']
+            self['MAX_LENGTH'] = self['DEFAULT_MAX_LENGTH']
 
         self.set_probability_of_extending_route()
         
     def set_probability_of_extending_route(self):
-        assert 'DIFFICULTY' in self.constants
-        assert 'MAX_DIFFICULTY_PROBABILITY' in self.constants
+        assert 'MAX_LENGTH' in self.constants
+        assert 'MAX_LENGTH_PROBABILITY' in self.constants
         
-        difficulty = self['DIFFICULTY']
-        max_difficulty_probability = self['MAX_DIFFICULTY_PROBABILITY']
-        incremental_difficulty_probability = max_difficulty_probability ** (1.0 / difficulty)
+        max_length = self['MAX_LENGTH']
+        max_length_probability = self['MAX_LENGTH_PROBABILITY']
+        incremental_length_probability = max_length_probability ** (1.0 / max_length)
 
-        self['PROBABILITY_OF_EXTENDING_ROUTE'] = incremental_difficulty_probability
+        self['PROBABILITY_OF_EXTENDING_ROUTE'] = incremental_length_probability
         
     def get(self, name, provided):
         return provided or self[name]
