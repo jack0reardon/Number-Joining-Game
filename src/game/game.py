@@ -22,15 +22,19 @@ class Game:
         assert self.game_pixels is not None
 
 
-    def to_pdf(self, title  =None, show_solution=False, output_filename=None):
+    def to_pdf(self, title=None, show_solution=False, output_filename=None, download=True):
         assert self.game_pixels is not None
         pdf_file = PDFFile(title, show_solution, self.game_pixels)
-        pdf_file.create(output_filename)
+        if download:
+            return pdf_file.download()
+        else:
+            pdf_file.create(output_filename)
+            return
 
     def __str__(self):
         return '\n'.join([''.join([' ' + (' ' if int(x) < 10 else '') + str(x) if x != Colour.WHITE.value else '  .' for x in row]) for row in self.game_pixels])
 
 
 if __name__ == '__main__':
-    the_game = Game('C:/Users/sexy0/Documents/Python/mona-lisa.jpg', width_in_pxls_max = 20, height_in_pxls_max = 20, max_length = 20)
-    the_game.to_pdf()
+    the_game = Game('C:/Users/sexy0/Documents/Python/mona-lisa.jpg', width_in_pxls_max = 20, height_in_pxls_max = 20, max_length = 5)
+    the_game.to_pdf(download=False)

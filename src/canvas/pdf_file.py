@@ -1,5 +1,6 @@
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from io import BytesIO
 
 from config.config import Config
 
@@ -14,10 +15,22 @@ class PDFFile:
 
     def create(self, output_filename=None):
         self.pdf_canvas = canvas.Canvas('C:/Users/sexy0/Documents/' + PDFFile.get_output_filename(output_filename), pagesize=letter)
+        self.include_content()
+        self.pdf_canvas.save()
+
+    def download(self):
+        pdf_io = BytesIO()
+        self.pdf_canvas = canvas.Canvas(pdf_io)
+        self.include_content()
+        self.pdf_canvas.save()
+        # Move the buffer's position to the beginning
+        pdf_io.seek(0)
+        return pdf_io
+
+    def include_content(self):
         self.include_title()
         self.include_grid()
         self.include_copyright()
-        self.pdf_canvas.save()
 
     @staticmethod
     def get_output_filename(output_filename=None):
@@ -35,14 +48,16 @@ class PDFFile:
         cell_width = pdf_canvas_width / grid_width
         cell_height = pdf_canvas_height / grid_height
         cell_width_height = min(cell_width, cell_height)
+        x_border = (pdf_page_width - cell_width_height * grid_width) / 2
+        y_border = (pdf_page_height - cell_width_height * grid_height) / 2
 
         font_size = cell_width_height * 0.6
         self.pdf_canvas.setFont(config['PDF_FONT_NAME'], font_size)
 
         for i in range(grid_height):
             for j in range(grid_width):
-                x = config['PDF_BORDER_WIDTH'] + j * cell_width_height
-                y = pdf_page_height - config['PDF_BORDER_WIDTH'] - (i + 1) * cell_width_height
+                x = x_border + j * cell_width_height
+                y = pdf_page_height - y_border - (i + 1) * cell_width_height
                 self.pdf_canvas.rect(x, y, cell_width_height, cell_width_height)
                 text = str(self.game_pixels[i, j])
                 text_width = self.pdf_canvas.stringWidth(text, config['PDF_FONT_NAME'], font_size)

@@ -1,5 +1,0 @@
-Fill with 1s
-Merge n's into n+1's iff unambiguous
-A-B is unambiguous if:
-- A-B proposed has no alternate route
-- If A-C, then D-A is not possible
