@@ -1,0 +1,2 @@
+include src/image/data/*.jpg
+include src/config/data/specifications.csv
