@@ -26,7 +26,7 @@ class Config:
     @staticmethod
     def load_constants(specifications_filename):
         constants = {}
-        with open(specifications_filename, newline='') as csvfile:
+        with open(specifications_filename, newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 name = row['name']
@@ -51,7 +51,7 @@ class Config:
             warn('Could not match data_type. Defaulting to str() function.', UserWarning)
             return default
         
-    def set_max_length(self, max_length):
+    def set_max_length(self, max_length=None):
         if max_length is not None:
             assert isinstance(max_length, int)
             assert max_length > 0
@@ -72,7 +72,7 @@ class Config:
 
         self['PROBABILITY_OF_EXTENDING_ROUTE'] = incremental_length_probability
         
-    def get(self, name, provided):
+    def get(self, name, provided=None):
         return provided or self[name]
 
     def __getitem__(self, name):

@@ -125,8 +125,14 @@ class Canvas:
             other_route_other_pixel = other_route.path[0] if last_pxl == other_route.path[-1] else other_route.path[-1]
 
             new_pxls_to_connect = {pxl for pxl in other_pxls_to_connect}
-            new_pxls_to_connect.update({pxl.route.path[0] for pxl in solution if pxl.route is not None and coloured_canvas[pxl.point.y, pxl.point.x] != Colour.confirmed_colour()})
-            new_pxls_to_connect.update({pxl.route.path[-1] for pxl in solution if pxl.route is not None})
+            curr_route_start_start_pxl = self.get_pixel_if_not_already_confirmed(solution[0].route.path[0], coloured_canvas)
+            curr_route_start_end_pxl = self.get_pixel_if_not_already_confirmed(solution[0].route.path[-1], coloured_canvas)
+            curr_route_end_start_pxl = self.get_pixel_if_not_already_confirmed(solution[-1].route.path[0], coloured_canvas)
+            curr_route_end_end_pxl = self.get_pixel_if_not_already_confirmed(solution[-1].route.path[-1], coloured_canvas)
+            new_pxls_to_connect.update(curr_route_start_start_pxl)
+            new_pxls_to_connect.update(curr_route_start_end_pxl)
+            new_pxls_to_connect.update(curr_route_end_start_pxl)
+            new_pxls_to_connect.update(curr_route_end_end_pxl)
             new_pxls_to_connect.remove(solution[0])
             new_pxls_to_connect.remove(solution[-1])
 
@@ -141,13 +147,10 @@ class Canvas:
                     next_pxl_to_connect = new_pxls_to_connect.pop()
                 else:
                     next_pxl_to_connect = None
-            else:
+            elif new_pxls_to_connect:
                 # Prioritise the other route's other pixel
                 next_pxl_to_connect = other_route_other_pixel
                 new_pxls_to_connect.remove(next_pxl_to_connect)
-
-            if len(new_pxls_to_connect) == 0 and next_pxl_to_connect is not None:
-                print(1)
 
             n_solutions += self.get_n_solutions(new_coloured_canvas, next_pxl_to_connect, new_pxls_to_connect)
 
@@ -157,6 +160,9 @@ class Canvas:
                 return n_solutions
             
         return n_solutions
+    
+    def get_pixel_if_not_already_confirmed(self, pxl, coloured_canvas):
+        return {pxl} if coloured_canvas[pxl.point.y, pxl.point.x] != Colour.confirmed_colour() else {}
     
     def paint_canvas_with_solution(self, coloured_canvas, solution):
         new_coloured_canvas = self.copy_coloured_canvas(coloured_canvas)
@@ -232,7 +238,7 @@ class Canvas:
         pnts_NSEW = self.get_pnts_NSEW(pixel.point)
         return [self[pnt] for pnt in pnts_NSEW if pnt is not None]
     
-    def get_canvas_as_game(self):
+    def get_canvas_as_game_pixels(self):
         height, width = self.pixels.shape
         game_pixels = np.empty((height, width), dtype=object)
         game_pixels[:] = Colour.WHITE.value

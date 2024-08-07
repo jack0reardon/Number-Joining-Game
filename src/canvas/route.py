@@ -114,14 +114,6 @@ class Route:
     def get_next_route_extension(self, canvas):
         next_pxl_from_end = self.get_next_pxl_random(self.path[-1], canvas)
 
-        if next_pxl_from_end is not None and \
-            ((next_pxl_from_end.point.x == 2 and next_pxl_from_end.point.y == 7) or \
-            (next_pxl_from_end.point.x == 2 and next_pxl_from_end.point.y == 8) or \
-            (next_pxl_from_end.point.x == 3 and next_pxl_from_end.point.y == 7) or \
-            (next_pxl_from_end.point.x == 3 and next_pxl_from_end.point.y == 8)) and \
-            (next_pxl_from_end.route.len == 1):
-            print(1)
-
         if next_pxl_from_end is not None:
             return RouteExtension(next_pxl_from_end, True)
         
