@@ -16,15 +16,13 @@ class Game:
         
         canvas = Canvas.from_greyscale_image(rgb_image)
         canvas.extend_routes()
+        self.solution = canvas.routes
         self.game_pixels = canvas.get_canvas_as_game_pixels()
 
-    def solve(self):
+    def to_pdf(self, title=None, do_include_instructions=False, show_solution=False, output_filename=None, download=True):
         assert self.game_pixels is not None
+        pdf_file = PDFFile(pdf_title=title, do_include_instructions=do_include_instructions, show_solution=show_solution, the_solution=self.solution, game_pixels=self.game_pixels)
 
-
-    def to_pdf(self, title=None, show_solution=False, output_filename=None, download=True):
-        assert self.game_pixels is not None
-        pdf_file = PDFFile(title, show_solution, self.game_pixels)
         if download:
             return pdf_file.download()
         else:
@@ -36,7 +34,10 @@ class Game:
 
 
 if __name__ == '__main__':
-    # the_game = Game('C:/Users/sexy0/Documents/Python/mona-lisa.jpg', width_in_pxls_max = 50, height_in_pxls_max = 50, max_length = 30)
-    the_game = Game('C:/Users/sexy0/Documents/Python/rectangle.png', width_in_pxls_max = 100, height_in_pxls_max = 100, max_length = 30)
-    the_game.to_pdf(download=False)
+    the_game = Game('C:/Users/sexy0/Documents/Python/mona-lisa.jpg', width_in_pxls_max = 20, height_in_pxls_max = 20, max_length = 5)
+    # the_game = Game('C:/Users/sexy0/Documents/Python/rectangle.png', width_in_pxls_max = 100, height_in_pxls_max = 100, max_length = 30)
+    the_game.to_pdf(do_include_instructions=True, download=False, output_filename='with_instructions (solution).pdf', show_solution=True)
+    the_game.to_pdf(do_include_instructions=False, download=False, output_filename='without_instructions (solution).pdf', show_solution=True)
+    the_game.to_pdf(do_include_instructions=True, download=False, output_filename='with_instructions.pdf', show_solution=False)
+    the_game.to_pdf(do_include_instructions=False, download=False, output_filename='without_instructions.pdf', show_solution=False)
     print(the_game)

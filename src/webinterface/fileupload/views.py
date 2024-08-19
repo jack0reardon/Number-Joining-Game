@@ -6,7 +6,7 @@ from PIL import Image
 from django.http import JsonResponse
 
 from game.game import Game
-from .utils import convert_image_to_pdf
+from .utils import convert_image_to_pdf, create_zip_archive
 
     
 def upload_file(request):
@@ -17,6 +17,8 @@ def upload_file(request):
             difficulty = form.cleaned_data['difficulty']
             grid_size_int = form.cleaned_data['grid_size']
             puzzle_title = form.cleaned_data['puzzle_title']
+            do_include_instructions = form.cleaned_data['do_include_instructions']
+            show_solution = form.cleaned_data['show_solution']
 
             # Map the image_size slider value to actual sizes
             size_map = {
@@ -26,9 +28,20 @@ def upload_file(request):
             }
             grid_size = size_map.get(grid_size_int, 'small')
 
-            pdf_io = convert_image_to_pdf(filename, difficulty, grid_size, puzzle_title)
-            response = HttpResponse(pdf_io, content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename="{puzzle_title}.pdf"'
+            pdf_io = convert_image_to_pdf(filename, difficulty, grid_size, puzzle_title, do_include_instructions, False)
+            pdf_filename = f'{puzzle_title}.pdf'
+
+            if show_solution:
+                pdf_io_solution = convert_image_to_pdf(filename, difficulty, grid_size, puzzle_title, do_include_instructions, True)
+                pdfs = [(pdf_io, pdf_filename), (pdf_io_solution, f'{puzzle_title} (solution).pdf')]
+                zip_buffer = create_zip_archive(pdfs)
+            
+                response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
+                response['Content-Disposition'] = 'attachment; filename=files.zip'
+            else:
+                response = HttpResponse(pdf_io, content_type='application/pdf')
+                response['Content-Disposition'] = f'attachment; filename="{pdf_filename}"'
+                
             return response
     else:
         form = UploadFileForm()

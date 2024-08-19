@@ -97,7 +97,6 @@ class Canvas:
             if n_routes_before == n_routes_after:
                 max_len = max([r.len for r in self.routes])
                 n_max_lan = len([r for r in self.routes if r.len == max_len])
-                print(f'n_unsuccessful_extension_attempts: {n_unsuccessful_extension_attempts} and max length of route: {max_len} (count: {n_max_lan})')
             route_to_extend = self.get_next_route_to_extend()
 
     def remove_route(self, route_to_remove):

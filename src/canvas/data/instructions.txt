@@ -1,0 +1,5 @@
+Rules
+- Connect numbers to each other in pairs using a line. Pass through the same number of squares as indicated by the number. For example, connect a 2 to a different 2 by passing through 2 squares and connect a 9 to a different 9 by passing through 9 squares.
+- The line that you draw can only move in perpendicular directions (up, down, left and right). Measure the length of each line that you draw by including the starting and ending squares which contain numbers. So a line of length 5 will connect two 5's via three blank squares.
+- All numbers (except for 1's) come in pairs. 1's do not need connecting - just colour these squares in. A blank square can be consumed by at most one line, so no intersecting lines are allowed. All numbers must be connected.
+- There is only one unique solution. The lines will form a picture when completed - colour in every square that contains a number or has a line through it.

@@ -27,3 +27,11 @@ class UploadFileForm(forms.Form):
         required=True,
         widget=forms.TextInput(attrs={'placeholder': 'Enter Puzzle Title'})
     )
+    do_include_instructions = forms.BooleanField(
+        label="Include Instructions?",
+        required=False
+    )
+    show_solution = forms.BooleanField(
+        label="Show Solution?",
+        required=False
+    )

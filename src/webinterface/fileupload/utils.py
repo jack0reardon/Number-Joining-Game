@@ -1,19 +1,26 @@
 from io import BytesIO
-from reportlab.pdfgen import canvas
-from PIL import Image
+from zipfile import ZipFile
 
 from config.config import Config
 from game.game import Game
 
 config = Config()
 
-def convert_image_to_pdf(filename, difficulty, grid_size, puzzle_title):
+def create_zip_archive(pdfs_and_their_filenames):
+    buffer = BytesIO()
+    with ZipFile(buffer, 'w') as zipfile:
+        for the_pdf, filename in pdfs_and_their_filenames:
+            zipfile.writestr(filename, the_pdf.read())
+    buffer.seek(0)
+    return buffer
+
+def convert_image_to_pdf(filename, difficulty, grid_size, puzzle_title, do_include_instructions, show_solution):
     width_in_pxls_max = get_width_in_pxls_max(grid_size)
     height_in_pxls_max = width_in_pxls_max
     max_length = get_max_length(difficulty)
 
     the_game = Game(filename, width_in_pxls_max, height_in_pxls_max, max_length)
-    pdf_io = the_game.to_pdf(puzzle_title, show_solution=False, download=True)
+    pdf_io = the_game.to_pdf(title=puzzle_title, do_include_instructions=do_include_instructions, show_solution=show_solution, download=True)    
     return pdf_io
 
 def get_width_in_pxls_max(grid_size):
