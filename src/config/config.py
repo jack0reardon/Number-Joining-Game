@@ -55,7 +55,7 @@ class Config:
         if max_length is not None:
             assert isinstance(max_length, int)
             assert max_length > 0
-            assert max_length <= 20
+            assert max_length <= 30
             self['MAX_LENGTH'] = max_length
         else:
             self['MAX_LENGTH'] = self['DEFAULT_MAX_LENGTH']

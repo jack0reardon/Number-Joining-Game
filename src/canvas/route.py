@@ -11,6 +11,7 @@ config = Config()
 class Route:
     def __init__(self):
         self.path = []
+        self.n_unsuccessful_extension_attempts = 0
 
     @classmethod
     def from_pxl(cls, initial_pxl):
@@ -72,6 +73,7 @@ class Route:
     
     def should_extend(self):
         probability_of_extension = 0 if self.reached_max_length() else config['PROBABILITY_OF_EXTENDING_ROUTE']
+        probability_of_extension * (config['UNSUCCESSFUL_EXTENSION_ATTEMPT_REDUCTION_FACTOR'] ** self.n_unsuccessful_extension_attempts)
         return random() < probability_of_extension
 
     def extend(self, canvas):               
@@ -108,6 +110,8 @@ class Route:
             self.recolour_route()
             other_route.recolour_route()
             canvas.add_route(other_route)
+
+            self.n_unsuccessful_extension_attempts += 1
         
 
 
