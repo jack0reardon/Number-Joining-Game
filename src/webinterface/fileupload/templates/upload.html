@@ -52,7 +52,7 @@
             <form id="upload-form" method="post" enctype="multipart/form-data" action="{% url 'upload_file' %}">
                 {% csrf_token %}
                 {{ form.as_p }}
-                <button type="submit" class="btn btn-primary">Create Puzzle</button>
+                <button type="submit" class="btn btn-primary">Create PDF Puzzle</button>
             </form>
         </div>
     </div>

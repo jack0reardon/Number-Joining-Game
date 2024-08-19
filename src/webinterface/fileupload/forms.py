@@ -5,7 +5,7 @@ from config.config import Config
 config = Config()
 
 class UploadFileForm(forms.Form):
-    filename = forms.FileField(label='Select a file')
+    filename = forms.FileField(label='Choose an image')
     difficulty = forms.IntegerField(
         label="Difficulty",
         widget=forms.NumberInput(attrs={'type': 'range', 'min': '1', 'max': '10', 'step': '1'}),
