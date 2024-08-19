@@ -1,1 +1,1 @@
-web: gunicorn webinterface.wsgi
+web: gunicorn src.webinterface.webinterface.wsgi
