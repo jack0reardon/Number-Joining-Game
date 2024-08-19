@@ -106,7 +106,7 @@ class PDFFile:
 
             specifications_filename = pkg_resources.resource_filename('canvas', 'data/instructions.txt')
             with open(specifications_filename, newline='', encoding='utf-8') as file:
-                the_instructions = file.readlines()
+                the_instructions = [line.strip() for line in file.readlines()]
 
             self.pdf_canvas.setFont(config['PDF_FONT_NAME'], config['PDF_TITLE_FONT_SIZE'])
             self.pdf_canvas.drawString(text_x, text_y, the_instructions[0])
