@@ -34,7 +34,7 @@ class Game:
 
 
 if __name__ == '__main__':
-    the_game = Game('C:/Users/sexy0/Documents/Python/mona-lisa.jpg', width_in_pxls_max = 20, height_in_pxls_max = 20, max_length = 5)
+    the_game = Game('C:/Users/sexy0/Documents/Python/mona-lisa.jpg', width_in_pxls_max = 10, height_in_pxls_max = 10, max_length = 5)
     # the_game = Game('C:/Users/sexy0/Documents/Python/rectangle.png', width_in_pxls_max = 100, height_in_pxls_max = 100, max_length = 30)
     the_game.to_pdf(do_include_instructions=True, download=False, output_filename='with_instructions (solution).pdf', show_solution=True)
     the_game.to_pdf(do_include_instructions=False, download=False, output_filename='without_instructions (solution).pdf', show_solution=True)

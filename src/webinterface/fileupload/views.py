@@ -28,20 +28,19 @@ def upload_file(request):
             }
             grid_size = size_map.get(grid_size_int, 'small')
 
-            pdf_io = convert_image_to_pdf(filename, difficulty, grid_size, puzzle_title, do_include_instructions, False)
+            pdf_io, pdf_io_solution = convert_image_to_pdf(filename, difficulty, grid_size, puzzle_title, do_include_instructions)
             pdf_filename = f'{puzzle_title}.pdf'
 
             if show_solution:
-                pdf_io_solution = convert_image_to_pdf(filename, difficulty, grid_size, puzzle_title, do_include_instructions, True)
                 pdfs = [(pdf_io, pdf_filename), (pdf_io_solution, f'{puzzle_title} (solution).pdf')]
                 zip_buffer = create_zip_archive(pdfs)
             
                 response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
-                response['Content-Disposition'] = 'attachment; filename=files.zip'
+                response['Content-Disposition'] = f'attachment; filename="{puzzle_title}" (with solution).zip'
             else:
                 response = HttpResponse(pdf_io, content_type='application/pdf')
                 response['Content-Disposition'] = f'attachment; filename="{pdf_filename}"'
-                
+
             return response
     else:
         form = UploadFileForm()

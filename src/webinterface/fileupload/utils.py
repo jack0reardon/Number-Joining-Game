@@ -14,14 +14,15 @@ def create_zip_archive(pdfs_and_their_filenames):
     buffer.seek(0)
     return buffer
 
-def convert_image_to_pdf(filename, difficulty, grid_size, puzzle_title, do_include_instructions, show_solution):
+def convert_image_to_pdf(filename, difficulty, grid_size, puzzle_title, do_include_instructions):
     width_in_pxls_max = get_width_in_pxls_max(grid_size)
     height_in_pxls_max = width_in_pxls_max
     max_length = get_max_length(difficulty)
 
     the_game = Game(filename, width_in_pxls_max, height_in_pxls_max, max_length)
-    pdf_io = the_game.to_pdf(title=puzzle_title, do_include_instructions=do_include_instructions, show_solution=show_solution, download=True)    
-    return pdf_io
+    pdf_io = the_game.to_pdf(title=puzzle_title, do_include_instructions=do_include_instructions, show_solution=False, download=True)
+    pdf_io_solution = the_game.to_pdf(title=puzzle_title, do_include_instructions=do_include_instructions, show_solution=True, download=True)
+    return pdf_io, pdf_io_solution
 
 def get_width_in_pxls_max(grid_size):
     if grid_size == 'small':
