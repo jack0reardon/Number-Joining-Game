@@ -19,7 +19,7 @@ def convert_image_to_pdf(filename, difficulty, grid_size, grey_percentile_cutoff
     height_in_pxls_max = width_in_pxls_max
     max_length = get_max_length(grid_size, difficulty)
 
-    the_game = Game(filename, width_in_pxls_max, height_in_pxls_max, max_length)
+    the_game = Game(filename, width_in_pxls_max, height_in_pxls_max, grey_percentile_cutoff, max_length)
     pdf_io = the_game.to_pdf(title=puzzle_title, do_include_instructions=do_include_instructions, show_solution=False, download=True)
     pdf_io_solution = the_game.to_pdf(title=puzzle_title, do_include_instructions=do_include_instructions, show_solution=True, download=True)
     return pdf_io, pdf_io_solution

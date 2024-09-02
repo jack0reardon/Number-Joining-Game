@@ -22,7 +22,7 @@ class UploadFileForm(forms.Form):
         initial='1'
     )
     grey_percentile_cutoff = forms.IntegerField(
-        label="Greyscale Saturation",
+        label="Greyscale Brightness",
         widget=forms.NumberInput(attrs={'type': 'range', 'min': '10', 'max': '90', 'step': '10'}),
         initial=config['DEFAULT_GREY_PERCENTILE_CUTOFF']
     )
