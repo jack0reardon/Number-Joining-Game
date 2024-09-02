@@ -32,7 +32,7 @@
     display: none;
 }
 
-.container {
+.imgcontainer {
     display: flex;
     align-items: center;
 }
@@ -42,6 +42,6 @@
     line-height: 1; /* Ensures vertical alignment */
 }
 .image {
-    height: 100px; /* Set height for the images */
+    height: 200px; /* Set height for the images */
     width: auto; /* Maintain aspect ratio */
 }
