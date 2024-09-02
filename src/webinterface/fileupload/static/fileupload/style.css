@@ -35,6 +35,7 @@
 .imgcontainer {
     display: flex;
     align-items: center;
+    justify-content: center; /* Center-align items horizontally */
 }
 .arrow {
     font-size: 48px; /* Large size for the arrow */
