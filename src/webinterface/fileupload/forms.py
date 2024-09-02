@@ -21,6 +21,11 @@ class UploadFileForm(forms.Form):
         widget=forms.NumberInput(attrs={'type': 'range', 'min': '1', 'max': '3', 'step': '1', 'value': '1'}),
         initial='1'
     )
+    grey_percentile_cutoff = forms.IntegerField(
+        label="Greyscale Saturation",
+        widget=forms.NumberInput(attrs={'type': 'range', 'min': '10', 'max': '90', 'step': '10'}),
+        initial=config['DEFAULT_GREY_PERCENTILE_CUTOFF']
+    )
     puzzle_title = forms.CharField(
         label="Puzzle Title",
         max_length=100,

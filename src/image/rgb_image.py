@@ -78,7 +78,7 @@ class RGBImage:
         return proposed_compression_factor
 
     def discretise_greyscale(greyscale_from_rgb, grey_percentile_cutoff):
-        median_luminance = np.percentile(greyscale_from_rgb.flatten(), config.get('GREY_PERCENTILE_CUTOFF', grey_percentile_cutoff))
+        median_luminance = np.percentile(greyscale_from_rgb.flatten(), config.get('DEFAULT_GREY_PERCENTILE_CUTOFF', grey_percentile_cutoff))
         return np.where(greyscale_from_rgb < median_luminance, Colour.WHITE, Colour.GREY)
         
     def __str__(self):

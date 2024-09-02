@@ -14,10 +14,10 @@ def create_zip_archive(pdfs_and_their_filenames):
     buffer.seek(0)
     return buffer
 
-def convert_image_to_pdf(filename, difficulty, grid_size, puzzle_title, do_include_instructions):
+def convert_image_to_pdf(filename, difficulty, grid_size, grey_percentile_cutoff, puzzle_title, do_include_instructions):
     width_in_pxls_max = get_width_in_pxls_max(grid_size)
     height_in_pxls_max = width_in_pxls_max
-    max_length = get_max_length(difficulty)
+    max_length = get_max_length(grid_size, difficulty)
 
     the_game = Game(filename, width_in_pxls_max, height_in_pxls_max, max_length)
     pdf_io = the_game.to_pdf(title=puzzle_title, do_include_instructions=do_include_instructions, show_solution=False, download=True)
@@ -34,7 +34,7 @@ def get_width_in_pxls_max(grid_size):
 
     raise ValueError('grid_size was not one of `small`, `medium` or `large`.')
 
-def get_max_length(difficulty):
+def get_max_length(grid_size, difficulty):
     diff_1_max_len = config['DIFFICULTY_1_MAX_LENGTH']
     diff_10_max_len = config['DIFFICULTY_10_MAX_LENGTH']
     n_from_1 = difficulty - 1
@@ -42,6 +42,10 @@ def get_max_length(difficulty):
     span = 10 - 1
     lower_weight = n_from_10 / span
     upper_weight = n_from_1 / span
-    result = diff_1_max_len * lower_weight + diff_10_max_len * upper_weight
-    result = int(result)
-    return result
+    proposed_max_length = diff_1_max_len * lower_weight + diff_10_max_len * upper_weight
+    proposed_max_length = int(proposed_max_length)
+
+    if grid_size == 'large':
+        proposed_max_length = int(proposed_max_length * config['LARGE_GRID_DIFFICULTY_SCALAR_FACTOR'])
+
+    return proposed_max_length

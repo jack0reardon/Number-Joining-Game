@@ -19,6 +19,7 @@ def upload_file(request):
             puzzle_title = form.cleaned_data['puzzle_title']
             do_include_instructions = form.cleaned_data['do_include_instructions']
             show_solution = form.cleaned_data['show_solution']
+            grey_percentile_cutoff = form.cleaned_data['grey_percentile_cutoff']
 
             # Map the image_size slider value to actual sizes
             size_map = {
@@ -28,7 +29,7 @@ def upload_file(request):
             }
             grid_size = size_map.get(grid_size_int, 'small')
 
-            pdf_io, pdf_io_solution = convert_image_to_pdf(filename, difficulty, grid_size, puzzle_title, do_include_instructions)
+            pdf_io, pdf_io_solution = convert_image_to_pdf(filename, difficulty, grid_size, grey_percentile_cutoff, puzzle_title, do_include_instructions)
             pdf_filename = f'{puzzle_title}.pdf'
 
             if show_solution:
