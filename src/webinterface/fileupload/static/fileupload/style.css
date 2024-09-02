@@ -31,3 +31,17 @@
 .hidden {
     display: none;
 }
+
+.container {
+    display: flex;
+    align-items: center;
+}
+.arrow {
+    font-size: 48px; /* Large size for the arrow */
+    margin: 0 20px; /* Space around the arrow */
+    line-height: 1; /* Ensures vertical alignment */
+}
+.image {
+    height: 100px; /* Set height for the images */
+    width: auto; /* Maintain aspect ratio */
+}
