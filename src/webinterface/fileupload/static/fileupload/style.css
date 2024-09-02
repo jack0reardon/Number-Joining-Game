@@ -43,7 +43,7 @@
     display: flex;
     flex-direction: column;
     align-items: center; /* Center-align items vertically in each container */
-    width: 30%; /* Each container takes up 30% of the main container width */
+    width: 90%; /* Each container takes up 30% of the main container width */
     background-color: white; /* Background color for individual containers */
     padding: 10px; /* Padding inside each container */
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Optional: Adds shadow for better visual separation */
